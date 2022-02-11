@@ -1,7 +1,9 @@
+using Demo02_WebAPI.DAL;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -32,6 +34,11 @@ namespace Demo02_WebAPI
          {
             c.SwaggerDoc("v1", new OpenApiInfo { Title = "Demo02_WebAPI", Version = "v1" });
          });
+
+         services.AddDbContext<DataContext>(
+            builder => builder.UseSqlServer(Configuration.GetConnectionString("default"))
+         );
+
       }
 
       // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
