@@ -23,16 +23,33 @@ namespace Demo02_WebAPI.DAL
 
       protected override void OnModelCreating(ModelBuilder modelBuilder)
       {
+         // Utilisation de l'API Fluent pour initialiser les données
+         modelBuilder.Entity<Author>().HasData(_InitialAuthors);
+         modelBuilder.Entity<Book>().HasData(_InitialBooks);
+
+
          // Utilisation de l'API Fluent pour établir une Many-to-Many
          modelBuilder.Entity<Book>()
             .HasMany(book => book.Authors)
-            .WithMany(author => author.Books);
-
-         // Utilisation de l'API Fluent pour initialiser les données
-         modelBuilder.Entity<Author>().HasData(_InitialAuthors);
+            .WithMany(author => author.Books)
+            .UsingEntity(ba => ba.HasData(new
+            {
+               AuthorsAuthorId = _InitialAuthors[0].AuthorId,
+               BooksBookId = _InitialBooks[0].BookId
+            },
+            new
+            {
+               AuthorsAuthorId = _InitialAuthors[1].AuthorId,
+               BooksBookId = _InitialBooks[1].BookId
+            },
+            new
+            {
+               AuthorsAuthorId = _InitialAuthors[2].AuthorId,
+               BooksBookId = _InitialBooks[1].BookId
+            }));
       }
 
-      private IEnumerable<Author> _InitialAuthors = new[]
+      private List<Author> _InitialAuthors = new List<Author>
       {
          new Author() { 
             AuthorId=Guid.NewGuid(), Firstname="Riri", Lastname="Duck"
@@ -45,6 +62,18 @@ namespace Demo02_WebAPI.DAL
          },
          new Author() { 
             AuthorId=Guid.NewGuid(), Firstname="Gontran", Lastname="Bonheur" 
+         }
+      };
+
+      private List<Book> _InitialBooks = new List<Book>
+      {
+         new Book()
+         {
+            BookId = Guid.NewGuid(), Title = "Hello World", NbPage = 42
+         },
+         new Book()
+         {
+            BookId = Guid.NewGuid(), Title = "Bonjour", NbPage = null
          }
       };
 

@@ -4,14 +4,16 @@ using Demo02_WebAPI.DAL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Demo02_WebAPI.DAL.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20220211152507_AddDataBook")]
+    partial class AddDataBook
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,18 +38,8 @@ namespace Demo02_WebAPI.DAL.Migrations
                     b.HasData(
                         new
                         {
-                            AuthorsAuthorId = new Guid("4a0effdc-5290-4bbd-906f-0bad015bd83c"),
-                            BooksBookId = new Guid("0a2ddeef-5121-4d4f-b866-4dcfeaad4a8c")
-                        },
-                        new
-                        {
-                            AuthorsAuthorId = new Guid("b6d536e9-afb3-40c7-9e87-14144eaae072"),
-                            BooksBookId = new Guid("15429365-7ecd-497f-8889-63d732be0dd9")
-                        },
-                        new
-                        {
-                            AuthorsAuthorId = new Guid("bf04a921-d509-4708-bbea-ae48a37fc953"),
-                            BooksBookId = new Guid("15429365-7ecd-497f-8889-63d732be0dd9")
+                            AuthorsAuthorId = new Guid("4500f329-e046-4395-b532-fe734b9bd637"),
+                            BooksBookId = new Guid("528b0102-c701-421a-84b6-b3bcb7973cd5")
                         });
                 });
 
@@ -77,25 +69,25 @@ namespace Demo02_WebAPI.DAL.Migrations
                     b.HasData(
                         new
                         {
-                            AuthorId = new Guid("4a0effdc-5290-4bbd-906f-0bad015bd83c"),
+                            AuthorId = new Guid("4500f329-e046-4395-b532-fe734b9bd637"),
                             Firstname = "Riri",
                             Lastname = "Duck"
                         },
                         new
                         {
-                            AuthorId = new Guid("b6d536e9-afb3-40c7-9e87-14144eaae072"),
+                            AuthorId = new Guid("8dc71cc2-bfaf-4792-bbc0-9a3fd6ad9e22"),
                             Firstname = "Della",
                             Lastname = "Duck"
                         },
                         new
                         {
-                            AuthorId = new Guid("bf04a921-d509-4708-bbea-ae48a37fc953"),
+                            AuthorId = new Guid("b3a11a9f-c717-4984-bd69-2f4e4f880b16"),
                             Firstname = "Zaza",
                             Lastname = "Vanderquack"
                         },
                         new
                         {
-                            AuthorId = new Guid("d397228d-3c0b-424e-bfa6-7ea98495125e"),
+                            AuthorId = new Guid("08539e80-348d-4dd4-b64d-f31259f39353"),
                             Firstname = "Gontran",
                             Lastname = "Bonheur"
                         });
@@ -125,13 +117,13 @@ namespace Demo02_WebAPI.DAL.Migrations
                     b.HasData(
                         new
                         {
-                            BookId = new Guid("0a2ddeef-5121-4d4f-b866-4dcfeaad4a8c"),
+                            BookId = new Guid("528b0102-c701-421a-84b6-b3bcb7973cd5"),
                             NbPage = (short)42,
                             Title = "Hello World"
                         },
                         new
                         {
-                            BookId = new Guid("15429365-7ecd-497f-8889-63d732be0dd9"),
+                            BookId = new Guid("4685f5aa-9b4d-4160-86f6-6b86ddd2f168"),
                             Title = "Bonjour"
                         });
                 });
