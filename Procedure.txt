@@ -1,0 +1,27 @@
+Génération de projet API
+************************
+- Création de la solution API
+- Ajout un projet "Biblio de classe" -> DAL
+
+Préparer pour EntityFramework
+*****************************
+- Ajout des packages : 
+	• Microsoft.EntityFrameworkCore
+	• Microsoft.EntityFrameworkCore.SqlServer
+	• Microsoft.EntityFrameworkCore.Design
+	• Microsoft.EntityFrameworkCore.Tools
+  /!\ Attention aux version ;)
+  
+- DAL: Définition des classe POCO
+
+- DAL: Création du DataContext (Choix du nom libre)
+	• Ajout des entities via « DbSet »
+	• Surcharge des méthodes pour la config
+	  (Définition de lien « Many to Many » via l'API Fluent
+
+- API: Ajout du DbContext dans le startup
+	• Dans la méthode configure « service.AddDbContext(...) »
+
+- Console: Création de la DbContext
+	• « Add-migration Initial »
+	• « Update-Database »
