@@ -1,6 +1,7 @@
 ﻿using Demo02_WebAPI.DAL;
 using Demo02_WebAPI.DAL.Entities;
 using Demo02_WebAPI.Mappers;
+using Demo02_WebAPI.ResponseModel;
 using Demo02_WebAPI.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +26,8 @@ namespace Demo02_WebAPI.Controllers
       }
 
       [HttpGet]
+      // ↓ Permet de définir le type de retour en fonction du status (Swagger)
+      [ProducesResponseType(200, Type = typeof(IEnumerable<BookViewModel>))]
       public IActionResult GetAll()
       {
          IEnumerable<BookViewModel> books = _DataContext.Books
@@ -37,6 +40,8 @@ namespace Demo02_WebAPI.Controllers
 
       [HttpGet]
       [Route("{bookId:guid}")]
+      [ProducesResponseType(200, Type= typeof(BookViewModel))]
+      [ProducesResponseType(404, Type = typeof(ErrorResponse))]
       public IActionResult GetById([FromRoute] Guid bookId)
       {
          BookViewModel book = _DataContext.Books
@@ -48,30 +53,32 @@ namespace Demo02_WebAPI.Controllers
 
          if (book is null)
          {
-            return NotFound();
+            return NotFound(new ErrorResponse(404, "Book not found"));
          }
 
          return Ok(book);
       }
 
       [HttpPost]
+      [ProducesResponseType(200, Type= typeof(BookViewModel))]
+      [ProducesResponseType(400, Type = typeof(ErrorResponse))]
       public IActionResult AddBookWithAuthors([FromBody] BookDataWithAuthorsViewModel book)
       {
          if(book.Authors == null)
          {
-            return BadRequest(new { Error = "La propriétée \"authors\" est requise" });
+            return BadRequest(new ErrorResponse("The \"authors\" property is required"));
          }
 
          // IEnumerable<Guid> (AuthorID) → Author
          IEnumerable<Author> authors = _DataContext.Authors
                                           .Where(a => book.Authors
-                                                      .Any(authorId => authorId == a.AuthorId)
+                                              .Any(authorId => authorId == a.AuthorId)
                                                 );
 
          // Check: Verrification que tous les auteurs ont été récuperé.
          if(authors.Count() != book.Authors.Count())
          {
-            return BadRequest(new { Error = "Erreur avec les auteurs" });
+            return BadRequest(new ErrorResponse("Error with author values"));
          }
 
          // Conversion du "Book VM" en "Book Entity"
@@ -89,6 +96,8 @@ namespace Demo02_WebAPI.Controllers
 
       [HttpPut]
       [Route("{bookId}")]
+      [ProducesResponseType(200, Type = typeof(BookViewModel))]
+      [ProducesResponseType(400, Type = typeof(ErrorResponse))]
       public IActionResult UpdateBook([FromRoute] Guid bookId, [FromBody] BookDataViewModel book)
       {
          // Récuperation des données à mettre à jours
@@ -103,7 +112,7 @@ namespace Demo02_WebAPI.Controllers
          }
          catch (DbUpdateConcurrencyException e)
          {
-            return BadRequest();
+            return BadRequest(new ErrorResponse("Conflict Book"));
          }
 
          // Force Entity Framework à charger les auteurs des livres
@@ -115,16 +124,15 @@ namespace Demo02_WebAPI.Controllers
 
       [HttpDelete]
       [Route("{bookId:guid}")]
+      [ProducesResponseType(204)]
+      [ProducesResponseType(400, Type = typeof(ErrorResponse))]
       public IActionResult DeleteBook([FromRoute] Guid bookId)
       {
          Book target = _DataContext.Books.Where(b => b.BookId == bookId).SingleOrDefault();
 
          if (target is null) 
          {
-            return BadRequest(new
-            {
-               Error = "Le livre n'existe pas"
-            });
+            return BadRequest(new ErrorResponse("Book not found"));
          }
 
          // Modification de la DB
@@ -137,11 +145,13 @@ namespace Demo02_WebAPI.Controllers
 
       [HttpGet]
       [Route("Search")]
+      [ProducesResponseType(200, Type = typeof(IEnumerable<BookViewModel>))]
+      [ProducesResponseType(400, Type = typeof(ErrorResponse))]
       public IActionResult SearchBook([FromQuery] string title)
       {
          if(string.IsNullOrWhiteSpace(title))
          {
-            return BadRequest(new { Error = "Veuillez encoder une valeur"});
+            return BadRequest(new ErrorResponse("Invalide value"));
          }
 
          IEnumerable<BookViewModel> books = _DataContext.Books
@@ -154,11 +164,13 @@ namespace Demo02_WebAPI.Controllers
 
       [HttpGet]
       [Route("Search/Author")]
+      [ProducesResponseType(200, Type = typeof(IEnumerable<BookViewModel>))]
+      [ProducesResponseType(400, Type = typeof(ErrorResponse))]
       public IActionResult SearchBookByAuthor([FromQuery] string authorName)
       {
          if (string.IsNullOrWhiteSpace(authorName))
          {
-            return BadRequest(new { Error = "Veuillez encoder une valeur" });
+            return BadRequest(new ErrorResponse("Invalide value"));
          }
 
          IEnumerable<BookViewModel> books = _DataContext.Books

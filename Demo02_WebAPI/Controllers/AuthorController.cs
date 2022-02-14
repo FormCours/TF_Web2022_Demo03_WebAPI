@@ -1,6 +1,7 @@
 ﻿using Demo02_WebAPI.DAL;
 using Demo02_WebAPI.DAL.Entities;
 using Demo02_WebAPI.Mappers;
+using Demo02_WebAPI.ResponseModel;
 using Demo02_WebAPI.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -27,6 +28,7 @@ namespace Demo02_WebAPI.Controllers
 
       // GET: api/author
       [HttpGet]
+      [ProducesResponseType(200, Type = typeof(IEnumerable<AuthorViewModel>))]
       public IActionResult GetAll()
       {
          // Récuperation des datas via EntityFramework
@@ -44,6 +46,7 @@ namespace Demo02_WebAPI.Controllers
 
       // POST: api/author
       [HttpPost]
+      [ProducesResponseType(200, Type = typeof(AuthorViewModel))]
       public IActionResult AddAuthor([FromBody] AuthorDataViewModel author)
       {
          // TODO Add check if author is unique
@@ -56,16 +59,15 @@ namespace Demo02_WebAPI.Controllers
          _DataContext.SaveChanges();
 
          // Reponse de l'api
-         return Ok(new
-         {
-            authorId = newAuthor.AuthorId
-         });
+         return Ok(newAuthor.ToAuthorVM());
       }
 
 
       // GET: api/author/{authorId}      (Obtenir les infos d'un auteur)
       [HttpGet]
       [Route("{authorId:guid}")] // Parametre de route typé
+      [ProducesResponseType(200, Type = typeof(AuthorViewModel))]
+      [ProducesResponseType(404, Type = typeof(ErrorResponse))]
       public IActionResult GetById(Guid authorId)
       {
          // Récuperation des données via EntityFramework
@@ -76,7 +78,7 @@ namespace Demo02_WebAPI.Controllers
          // Si aucunne donnée n'a été trouvé => Erreur 404
          if (author is null)
          {
-            return NotFound();
+            return NotFound(new ErrorResponse(404, "Author not found"));
          }
 
          // Utilisation d'un mapper pour convertir une entité vers le ViewModel
@@ -87,6 +89,8 @@ namespace Demo02_WebAPI.Controllers
       // PUT:     (Mise à jours d'un auteur)
       [HttpPut]
       [Route("{authorId:guid}")]
+      [ProducesResponseType(200, Type = typeof(AuthorViewModel))]
+      [ProducesResponseType(400, Type = typeof(ErrorResponse))]
       public IActionResult UpdateAuthor(Guid authorId, [FromBody] AuthorDataViewModel author)
       {
          // Mise à jours des données
@@ -104,7 +108,7 @@ namespace Demo02_WebAPI.Controllers
          catch (DbUpdateConcurrencyException e)
          {
             // Exception produite lors d'une erreur durant un update
-            return BadRequest();
+            return BadRequest(new ErrorResponse("Conflict error"));
          }
 
          return Ok(updateAuthor.ToAuthorVM());
@@ -114,6 +118,8 @@ namespace Demo02_WebAPI.Controllers
       // DELETE:  (Suppression)
       [HttpDelete]
       [Route("{authorId}")]
+      [ProducesResponseType(204)]
+      [ProducesResponseType(400, Type = typeof(ErrorResponse))]
       public IActionResult DeleteAuthor(Guid authorId)
       {
          Author target = _DataContext.Authors.Where(a => a.AuthorId == authorId)
@@ -121,7 +127,7 @@ namespace Demo02_WebAPI.Controllers
 
          if (target is null)
          {
-            return BadRequest(new { Error = "L'auteur n'existe pas" });
+            return BadRequest(new ErrorResponse("Author not found"));
          }
 
          // On retire l'element via Entity Framework
@@ -139,12 +145,14 @@ namespace Demo02_WebAPI.Controllers
       //           sur leur nom ou prenom)
       [HttpGet]
       [Route("search")]
+      [ProducesResponseType(200, Type = typeof(IEnumerable<AuthorViewModel>))]
+      [ProducesResponseType(400, Type = typeof(ErrorResponse))]
       public IActionResult SearchAuthor([FromQuery] string name)
       {
          // Test de garde => Pas de recherche vide!
          if(string.IsNullOrWhiteSpace(name))
          {
-            return BadRequest(new { Error = "Veuillez encoder une valeur :o" });
+            return BadRequest(new ErrorResponse("Invalid value"));
          }
 
          // Recherche via du LINQ et un mapping vers le type "ViewModel"
