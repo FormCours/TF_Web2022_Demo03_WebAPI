@@ -57,22 +57,27 @@ namespace Demo02_WebAPI.Controllers
       [HttpPost]
       public IActionResult AddBookWithAuthors([FromBody] BookDataWithAuthorsViewModel book)
       {
+         if(book.Authors == null)
+         {
+            return BadRequest(new { Error = "La propriétée \"authors\" est requise" });
+         }
+
          // IEnumerable<Guid> (AuthorID) → Author
          IEnumerable<Author> authors = _DataContext.Authors
-                                         .Where(a => book.Authors
+                                          .Where(a => book.Authors
                                                       .Any(authorId => authorId == a.AuthorId)
-                                               );
+                                                );
 
          // Check: Verrification que tous les auteurs ont été récuperé.
          if(authors.Count() != book.Authors.Count())
          {
-            return BadRequest(new {
-               Error = "Erreur avec les auteurs"
-            });
+            return BadRequest(new { Error = "Erreur avec les auteurs" });
          }
 
-         // Ajout du livre dans la DB
+         // Conversion du "Book VM" en "Book Entity"
          Book newBook = book.ToBookEntity();
+
+         // Ajout des auteurs dans le nouveau livre
          newBook.Authors = authors.ToList();
 
          _DataContext.Books.Add(newBook);
@@ -128,6 +133,42 @@ namespace Demo02_WebAPI.Controllers
 
          // Envoi d'un réponse
          return NoContent();
+      }
+
+      [HttpGet]
+      [Route("Search")]
+      public IActionResult SearchBook([FromQuery] string title)
+      {
+         if(string.IsNullOrWhiteSpace(title))
+         {
+            return BadRequest(new { Error = "Veuillez encoder une valeur"});
+         }
+
+         IEnumerable<BookViewModel> books = _DataContext.Books
+                                                .Include(b => b.Authors)
+                                                .Where(b => b.Title.Contains(title))
+                                                .Select(b => b.ToBookVM());
+
+         return Ok(books);
+      }
+
+      [HttpGet]
+      [Route("Search/Author")]
+      public IActionResult SearchBookByAuthor([FromQuery] string authorName)
+      {
+         if (string.IsNullOrWhiteSpace(authorName))
+         {
+            return BadRequest(new { Error = "Veuillez encoder une valeur" });
+         }
+
+         IEnumerable<BookViewModel> books = _DataContext.Books
+                                             .Include(b => b.Authors)
+                                             .Where(b => b.Authors.Any(
+                                                a => a.Firstname.Contains(authorName)
+                                                   || a.Lastname.Contains(authorName)))
+                                             .Select(b => b.ToBookVM());
+
+         return Ok(books);
       }
    }
 }
