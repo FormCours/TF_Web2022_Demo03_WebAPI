@@ -139,7 +139,7 @@ namespace Demo02_WebAPI.Controllers
       //           sur leur nom ou prenom)
       [HttpGet]
       [Route("search")]
-      public IActionResult searchAuthor([FromQuery] string name)
+      public IActionResult SearchAuthor([FromQuery] string name)
       {
          // Test de garde => Pas de recherche vide!
          if(string.IsNullOrWhiteSpace(name))
