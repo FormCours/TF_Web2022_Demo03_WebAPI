@@ -28,11 +28,14 @@ namespace Demo02_WebAPI.Controllers
       [HttpGet]
       // ↓ Permet de définir le type de retour en fonction du status (Swagger)
       [ProducesResponseType(200, Type = typeof(IEnumerable<BookViewModel>))]
-      public IActionResult GetAll()
+      public async Task<IActionResult> GetAll()
       {
-         IEnumerable<BookViewModel> books = _DataContext.Books
-                                                .Include(b => b.Authors)
-                                                .Select(b => b.ToBookVM());
+         // Pour traitement lourd (Calc/DB)
+         // => Il est recommander d'utiliser de l'asynchrone
+          IEnumerable<BookViewModel> books = await _DataContext.Books
+                                                   .Include(b => b.Authors)
+                                                   .Select(b => b.ToBookVM())
+                                                   .ToListAsync();
          // Le include est possible via "Microsoft.EntityFrameworkCore"
 
          return Ok(books);
@@ -42,12 +45,13 @@ namespace Demo02_WebAPI.Controllers
       [Route("{bookId:guid}")]
       [ProducesResponseType(200, Type= typeof(BookViewModel))]
       [ProducesResponseType(404, Type = typeof(ErrorResponse))]
-      public IActionResult GetById([FromRoute] Guid bookId)
+      public async Task<IActionResult> GetById([FromRoute] Guid bookId)
       {
-         BookViewModel book = _DataContext.Books
-                                 .Include(b => b.Authors)
-                                 .SingleOrDefault(b => b.BookId == bookId)
-                                 ?.ToBookVM();
+         Book bookDB = await _DataContext.Books
+                        .Include(b => b.Authors)
+                        .SingleOrDefaultAsync(b => b.BookId == bookId);
+
+         BookViewModel book = bookDB?.ToBookVM();
          // Opérateur "?."  → Null-Conditional Operator (Sucre syntaxique)
          // Permet d'evité l'execution du Mapper, si l'object obtenu est null
 
@@ -62,7 +66,7 @@ namespace Demo02_WebAPI.Controllers
       [HttpPost]
       [ProducesResponseType(200, Type= typeof(BookViewModel))]
       [ProducesResponseType(400, Type = typeof(ErrorResponse))]
-      public IActionResult AddBookWithAuthors([FromBody] BookDataWithAuthorsViewModel book)
+      public async Task<IActionResult> AddBookWithAuthors([FromBody] BookDataWithAuthorsViewModel book)
       {
          if(book.Authors == null)
          {
@@ -70,10 +74,11 @@ namespace Demo02_WebAPI.Controllers
          }
 
          // IEnumerable<Guid> (AuthorID) → Author
-         IEnumerable<Author> authors = _DataContext.Authors
+         IEnumerable<Author> authors = await _DataContext.Authors
                                           .Where(a => book.Authors
                                               .Any(authorId => authorId == a.AuthorId)
-                                                );
+                                                )
+                                          .ToListAsync();
 
          // Check: Verrification que tous les auteurs ont été récuperé.
          if(authors.Count() != book.Authors.Count())
@@ -98,7 +103,7 @@ namespace Demo02_WebAPI.Controllers
       [Route("{bookId}")]
       [ProducesResponseType(200, Type = typeof(BookViewModel))]
       [ProducesResponseType(400, Type = typeof(ErrorResponse))]
-      public IActionResult UpdateBook([FromRoute] Guid bookId, [FromBody] BookDataViewModel book)
+      public async Task<IActionResult> UpdateBook([FromRoute] Guid bookId, [FromBody] BookDataViewModel book)
       {
          // Récuperation des données à mettre à jours
          Book updateBook = book.ToBookEntity();
@@ -108,7 +113,7 @@ namespace Demo02_WebAPI.Controllers
          {
             // Mise à jours des données dans la DB
             _DataContext.Books.Update(updateBook);
-            _DataContext.SaveChanges();
+            await _DataContext.SaveChangesAsync();
          }
          catch (DbUpdateConcurrencyException e)
          {
@@ -126,7 +131,7 @@ namespace Demo02_WebAPI.Controllers
       [Route("{bookId:guid}")]
       [ProducesResponseType(204)]
       [ProducesResponseType(400, Type = typeof(ErrorResponse))]
-      public IActionResult DeleteBook([FromRoute] Guid bookId)
+      public async Task<IActionResult> DeleteBook([FromRoute] Guid bookId)
       {
          Book target = _DataContext.Books.Where(b => b.BookId == bookId).SingleOrDefault();
 
@@ -137,7 +142,7 @@ namespace Demo02_WebAPI.Controllers
 
          // Modification de la DB
          _DataContext.Books.Remove(target);
-         _DataContext.SaveChanges();
+         await _DataContext.SaveChangesAsync();
 
          // Envoi d'un réponse
          return NoContent();
@@ -147,17 +152,18 @@ namespace Demo02_WebAPI.Controllers
       [Route("Search")]
       [ProducesResponseType(200, Type = typeof(IEnumerable<BookViewModel>))]
       [ProducesResponseType(400, Type = typeof(ErrorResponse))]
-      public IActionResult SearchBook([FromQuery] string title)
+      public async Task<IActionResult> SearchBook([FromQuery] string title)
       {
          if(string.IsNullOrWhiteSpace(title))
          {
             return BadRequest(new ErrorResponse("Invalide value"));
          }
 
-         IEnumerable<BookViewModel> books = _DataContext.Books
+         IEnumerable<BookViewModel> books = await _DataContext.Books
                                                 .Include(b => b.Authors)
                                                 .Where(b => b.Title.Contains(title))
-                                                .Select(b => b.ToBookVM());
+                                                .Select(b => b.ToBookVM())
+                                                .ToListAsync();
 
          return Ok(books);
       }
@@ -166,19 +172,20 @@ namespace Demo02_WebAPI.Controllers
       [Route("Search/Author")]
       [ProducesResponseType(200, Type = typeof(IEnumerable<BookViewModel>))]
       [ProducesResponseType(400, Type = typeof(ErrorResponse))]
-      public IActionResult SearchBookByAuthor([FromQuery] string authorName)
+      public async Task<IActionResult> SearchBookByAuthor([FromQuery] string authorName)
       {
          if (string.IsNullOrWhiteSpace(authorName))
          {
             return BadRequest(new ErrorResponse("Invalide value"));
          }
 
-         IEnumerable<BookViewModel> books = _DataContext.Books
+         IEnumerable<BookViewModel> books = await _DataContext.Books
                                              .Include(b => b.Authors)
                                              .Where(b => b.Authors.Any(
                                                 a => a.Firstname.Contains(authorName)
                                                    || a.Lastname.Contains(authorName)))
-                                             .Select(b => b.ToBookVM());
+                                             .Select(b => b.ToBookVM())
+                                             .ToListAsync();
 
          return Ok(books);
       }
