@@ -28,8 +28,14 @@ namespace Demo02_WebAPI
       // This method gets called by the runtime. Use this method to add services to the container.
       public void ConfigureServices(IServiceCollection services)
       {
+         // Ajout de la negociation du contenu (Autorisation du Json & XML
+         services.AddControllers(c =>
+         {
+            c.RespectBrowserAcceptHeader = true; // Traite le "Accept" du Header
+            c.ReturnHttpNotAcceptable = true; // Erreur 406 si le format n'est pas supporté
+         }).AddXmlDataContractSerializerFormatters(); // Ajout le format "XML"
 
-         services.AddControllers();
+
          services.AddSwaggerGen(c =>
          {
             c.SwaggerDoc("v1", new OpenApiInfo { Title = "Demo02_WebAPI", Version = "v1" });
