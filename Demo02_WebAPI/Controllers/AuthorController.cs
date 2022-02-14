@@ -121,7 +121,7 @@ namespace Demo02_WebAPI.Controllers
 
          if (target is null)
          {
-            return BadRequest(new { Erreur = "L'auteur n'existe pas" });
+            return BadRequest(new { Error = "L'auteur n'existe pas" });
          }
 
          // On retire l'element via Entity Framework
